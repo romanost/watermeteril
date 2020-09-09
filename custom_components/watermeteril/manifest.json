@@ -1,0 +1,8 @@
+{
+    "domain": "watermeteril",
+    "name": "Water meter IL",
+    "documentation": "https://github.com/romanost/watermeteril",
+    "requirements": [],
+    "dependencies": [],
+    "codeowners": ["@romanost"]
+}
