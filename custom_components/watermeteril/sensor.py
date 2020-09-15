@@ -1,18 +1,14 @@
 """Water Meter IL sensor """
-from datetime import timedelta
 import logging
-import re
 from typing import Any, Callable, Dict, Optional
 from urllib import parse
 import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 from urllib.request import Request, urlopen
-# import zlib
 import gzip
 import json
 
-from aiohttp import ClientError
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
     CONF_USERNAME,
@@ -28,12 +24,8 @@ from homeassistant.helpers.typing import (
     HomeAssistantType,
 )
 import voluptuous as vol
-import aiohttp
-from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
-# Time between updating data from GitHub
-SCAN_INTERVAL = timedelta(hours=3)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -43,7 +35,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
-def get_water_page (wuser:str, wpass:str):
+def get_water_page(wuser: str, wpass: str):
     siteurl = "https://cp.city-mind.com/"
     headers = {'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'curl/7.68.0'}
     sdata = {}
@@ -61,7 +53,6 @@ def get_water_page (wuser:str, wpass:str):
 
     try:
         s = Request(siteurl)
-        # r = urlopen(s, None, 180).read()
         r = urlopen(s, None, 180).read()
         r = gzip.decompress(r)
         bs = BeautifulSoup(r, 'lxml')
@@ -90,7 +81,6 @@ def get_water_page (wuser:str, wpass:str):
                     print(len(th))
                     for z in th:
                         ths.append(z.text)
-                        # print(z)
                 elif not row.findChildren("td", {"align": "center"}):
                     print("no th")
                     ri += 1
@@ -101,8 +91,8 @@ def get_water_page (wuser:str, wpass:str):
                         meters[ri][ths[i]] = one.text
                         print(one)
                         i += 1
-        i=0
-        ms=[]
+        i = 0
+        ms = []
         for m in meters:
             ms.append(meters[m])
 
@@ -110,11 +100,10 @@ def get_water_page (wuser:str, wpass:str):
             data1 = json.loads(bs.body.find('div', {"id": "cphMain_div_properties"}).text)[0]
             data2 = json.loads(bs.body.find('div', {"id": "cphMain_div_monthly_consumption"}).text)[0]
             data1.update(data2)
-            data1['מספר מונה']=multi
-            data1['צריכה חודשית']=data1['Consumption']
-            ms=[]
+            data1['מספר מונה'] = multi
+            data1['צריכה חודשית'] = data1['Consumption']
+            ms = []
             ms.append(data1)
-
 
         return ms
 
@@ -123,16 +112,16 @@ def get_water_page (wuser:str, wpass:str):
 
 
 async def async_setup_platform(
-    hass: HomeAssistantType,
-    config: ConfigType,
-    async_add_entities: Callable,
-    discovery_info: Optional[DiscoveryInfoType] = None,
+        hass: HomeAssistantType,
+        config: ConfigType,
+        async_add_entities: Callable,
+        discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
     """Set up the sensor platform."""
     session = async_get_clientsession(hass)
-    wuser=config[CONF_USERNAME]
-    wpass=config[CONF_PASSWORD]
-    waterpage=await hass.async_add_executor_job(get_water_page,wuser, wpass)
+    wuser = config[CONF_USERNAME]
+    wpass = config[CONF_PASSWORD]
+    waterpage = await hass.async_add_executor_job(get_water_page, wuser, wpass)
     sensors = [WaterMeterILSensor(wuser, wpass, wmeter) for wmeter in waterpage]
     async_add_entities(sensors, update_before_add=True)
 
@@ -142,12 +131,12 @@ class WaterMeterILSensor(Entity):
 
     def __init__(self, wuser: str, wpass: str, waterpage: Any):
         super().__init__()
-        self._name="mone"
+        self._name = "mone"
         self._state = None
         self._available = True
-        self.attrs: Dict[str,Any]={}
-        self.mone=0
-        self.wpage=waterpage
+        self.attrs: Dict[str, Any] = {}
+        self.mone = 0
+        self.wpage = waterpage
 
     @property
     def name(self) -> str:
@@ -175,10 +164,10 @@ class WaterMeterILSensor(Entity):
     async def async_update(self):
         self.mone = self.wpage['מספר מונה']
         self.mone = self.wpage['מספר מונה']
-        self._name=self.mone
-        self.attrs=self.wpage
-        self._state=self.wpage['צריכה חודשית']
-        self.attrs['entity_id']='mone_'+str(self.mone)
-        self.attrs['unique_id']='mone_'+self.mone
+        self._name = self.mone
+        self.attrs = self.wpage
+        self._state = self.wpage['צריכה חודשית']
+        self.attrs['entity_id'] = 'mone_' + str(self.mone)
+        self.attrs['unique_id'] = 'mone_' + self.mone
         self.attrs['friendly_name'] = 'mone_' + self.mone
-        self._available=True
+        self._available = True
