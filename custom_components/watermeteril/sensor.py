@@ -105,6 +105,17 @@ def get_water_page (wuser:str, wpass:str):
         ms=[]
         for m in meters:
             ms.append(meters[m])
+
+        if not bool(meters):
+            data1 = json.loads(bs.body.find('div', {"id": "cphMain_div_properties"}).text)[0]
+            data2 = json.loads(bs.body.find('div', {"id": "cphMain_div_monthly_consumption"}).text)[0]
+            data1.update(data2)
+            data1['מספר מונה']=multi
+            data1['צריכה חודשית']=data1['Consumption']
+            ms=[]
+            ms.append(data1)
+
+
         return ms
 
     except:
@@ -163,8 +174,6 @@ class WaterMeterILSensor(Entity):
 
     async def async_update(self):
         self.mone = self.wpage['מספר מונה']
-        _LOGGER.exception(self.mone)
-        _LOGGER.exception(self.wpage)
         self.mone = self.wpage['מספר מונה']
         self._name=self.mone
         self.attrs=self.wpage
