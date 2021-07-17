@@ -1,6 +1,7 @@
 {
     "domain": "watermeteril",
     "name": "Water meter IL",
+    "version": "0.0.1",
     "documentation": "https://github.com/romanost/watermeteril",
     "requirements": [],
     "dependencies": [],
